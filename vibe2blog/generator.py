@@ -106,7 +106,11 @@ def get_default_generator() -> ArticleGenerator:
 def build_template_article(context: SessionContext) -> str:
     title = context.safe_topic
     if context.language == "id":
+        if normalized_tone(context) == "tutorial":
+            return build_indonesian_tutorial_template(context, title)
         return build_indonesian_template(context, title)
+    if normalized_tone(context) == "tutorial":
+        return build_english_tutorial_template(context, title)
     return build_english_template(context, title)
 
 
@@ -152,6 +156,46 @@ Vibe2Blog membantu menjaga pengetahuan dari sesi agentic coding tetap hidup: buk
 """
 
 
+def build_indonesian_tutorial_template(context: SessionContext, title: str) -> str:
+    frontmatter = build_frontmatter(title, "id") if context.include_frontmatter else ""
+    code_section = build_code_section(context, language="id")
+    verification = context.verification_notes or "Uji kembali endpoint atau workflow yang bermasalah dengan skenario yang sama seperti sebelum perbaikan."
+    return f"""{frontmatter}## Tujuan
+
+Tutorial ini menjelaskan cara menelusuri dan memperbaiki masalah dari sesi coding berikut: {title}.
+
+## Gejala
+
+Masalah yang terlihat dari sesi ini:
+
+{as_quote_block(context.session_summary)}
+
+## Akar Masalah
+
+Berdasarkan catatan sesi, penyebab utamanya adalah mismatch antara asumsi kode dan nilai yang benar-benar dikirim oleh sistem saat runtime. Dalam kasus seperti ini, langkah pentingnya adalah membaca helper/controller yang terlibat, mencari kondisi permission yang gagal, lalu membandingkan nama object/context yang dicek kode dengan nilai aktual dari framework.
+
+## Langkah Perbaikan
+
+1. Buka file atau helper yang menangani permission/authentication.
+2. Cari kondisi yang membedakan object type, context, atau user role.
+3. Cocokkan nilai yang dicek kode dengan nilai yang dipakai framework saat request berjalan.
+4. Ubah kondisi hanya pada bagian yang salah, tanpa memperluas permission lebih dari kebutuhan.
+5. Simpan catatan mengapa nilai tersebut benar agar pembaca berikutnya tidak mengulang asumsi lama.{code_section}
+
+## Cara Menguji
+
+{verification}
+
+## Kenapa Perbaikan Ini Bekerja
+
+Perbaikan ini bekerja karena kode tidak lagi mengecek nilai object type yang keliru. Setelah kondisi permission memakai nilai runtime yang benar, pengguna yang memang berhak dapat melewati pengecekan tanpa membuka akses untuk skenario lain.
+
+## Catatan Penutup
+
+Bug permission sering terlihat seperti masalah token atau role, padahal akar masalahnya bisa sesederhana nama object type yang berbeda dari asumsi awal. Selalu verifikasi nilai yang dikirim framework sebelum memperluas aturan akses.
+"""
+
+
 def build_english_template(context: SessionContext, title: str) -> str:
     frontmatter = build_frontmatter(title, "en") if context.include_frontmatter else ""
     code_section = (
@@ -194,6 +238,46 @@ Vibe2Blog keeps the knowledge from an AI-assisted coding session alive as a huma
 """
 
 
+def build_english_tutorial_template(context: SessionContext, title: str) -> str:
+    frontmatter = build_frontmatter(title, "en") if context.include_frontmatter else ""
+    code_section = build_code_section(context, language="en")
+    verification = context.verification_notes or "Retest the failing endpoint or workflow with the same scenario that failed before the fix."
+    return f"""{frontmatter}## Goal
+
+This tutorial walks through how to diagnose and fix the issue from this coding session: {title}.
+
+## Symptom
+
+The session showed this failure mode:
+
+{as_quote_block(context.session_summary)}
+
+## Root Cause
+
+The core issue was a mismatch between what the code expected and what the framework actually passed at runtime. For this kind of bug, the useful path is to read the permission or authentication helper, find the condition that blocks the request, and compare the object/context names in code with the framework's real values.
+
+## Fix Steps
+
+1. Open the helper or controller that handles permissions/authentication.
+2. Find the condition that checks object type, context, or user role.
+3. Compare the checked value with the value the framework passes during the request.
+4. Update only the incorrect condition, without widening permissions beyond the intended user action.
+5. Leave a short note in code explaining the framework value so the old assumption does not return.{code_section}
+
+## How to Test
+
+{verification}
+
+## Why This Works
+
+The fix works because the permission check now uses the runtime object type that the framework actually sends. Once the condition matches reality, the legitimate user action can pass while unrelated access paths stay constrained.
+
+## Closing Notes
+
+Permission bugs can look like token or role problems, but sometimes the root cause is a naming mismatch. Verify the framework-provided values before broadening access rules.
+"""
+
+
 def build_frontmatter(title: str, language: str) -> str:
     escaped_title = title.replace('"', '\\"')
     return f"""---
@@ -203,6 +287,26 @@ language: "{language}"
 ---
 
 """
+
+
+def build_code_section(context: SessionContext, *, language: str) -> str:
+    if not context.include_code_snippets or not context.git_diff:
+        return ""
+    label = (
+        "Potongan perubahan yang relevan"
+        if language == "id"
+        else "Relevant change excerpt"
+    )
+    return f"\n\n### {label}\n\n```diff\n{trim_text(context.git_diff, 900)}\n```"
+
+
+def as_quote_block(text: str) -> str:
+    lines = trim_text(text, 1400).splitlines()
+    return "\n".join(f"> {line}" if line else ">" for line in lines)
+
+
+def normalized_tone(context: SessionContext) -> str:
+    return context.tone.strip().lower()
 
 
 def editorial_rewrite(markdown: str, context: SessionContext) -> str:
@@ -244,4 +348,3 @@ def trim_text(text: str, limit: int) -> str:
     if len(stripped) <= limit:
         return stripped
     return stripped[: limit - 3].rstrip() + "..."
-
