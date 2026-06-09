@@ -23,14 +23,16 @@ This project is being prepared as a Build Small Hackathon submission.
 
 ## Links
 
-- Public GitHub repository: `<add-github-repo-url>`
+- Public GitHub repository: https://github.com/ifirmawan/vibe2blog
 - Hugging Face Space: `<add-huggingface-space-url>`
+- Social post proof: `<add-social-post-url>`
 
 For the OpenAI Codex Track, the Hugging Face Space README must include the public GitHub repository link.
+For the main hackathon submission, the Space README must include proof of a social media post.
 
 ## Project Status
 
-Planning and product definition are complete. Implementation is intended to happen step by step.
+Planning and product definition are complete. The first Gradio MVP implementation is in progress.
 
 Current artifacts:
 
@@ -78,10 +80,11 @@ Vibe2Blog is planned as a Gradio app hosted on Hugging Face Spaces.
 The hackathon MVP should:
 
 - Use a small model within the Build Small Hackathon constraint of <=32B parameters.
-- Be usable directly from a Hugging Face Space.
+- Be usable directly from a Hugging Face Space, preferably under the official hackathon organization when eligible.
 - Include sample data so judges can try it quickly.
 - Generate both Indonesian and English Markdown output.
 - Include a short demo video built with Remotion.
+- Link social post proof from the Space README.
 
 For the OpenAI Codex Track:
 
@@ -188,7 +191,31 @@ Sesi coding dengan AI sering menghasilkan keputusan teknis yang penting, tetapi 
 
 ## Development Notes
 
-This repository is currently documentation-first. Start with the PRD and implement the smallest useful Gradio MVP before adding CLI or slash-command support.
+This repository now contains the first Gradio MVP and reusable core generator modules. Continue improving the smallest useful Gradio MVP before adding CLI or slash-command support.
+
+Run locally:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python app.py
+```
+
+Run tests:
+
+```bash
+.venv/bin/python -m unittest discover -s tests
+```
+
+Optional hosted inference:
+
+```bash
+export HF_TOKEN="<your-huggingface-token>"
+export VIBE2BLOG_MODEL="<small-instruct-model-under-32b>"
+.venv/bin/python app.py
+```
+
+Without `HF_TOKEN` and `VIBE2BLOG_MODEL`, the app uses a deterministic template fallback so the demo and tests stay runnable.
 
 When implementing:
 

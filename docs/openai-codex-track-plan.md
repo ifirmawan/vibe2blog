@@ -22,12 +22,13 @@ The Space README must include a visible link back to the public GitHub repositor
 ## Required Artifacts
 
 - Public GitHub repository.
-- Hugging Face Space.
+- Hugging Face Space, preferably under the official hackathon organization when eligible.
 - GitHub repository link in the Space README.
 - Commit history that clearly shows Codex participation.
 - Working Gradio app.
 - Demo video.
 - Social post.
+- Social post proof/link in the Space README for the main hackathon requirements.
 
 ## Commit Guidance
 
@@ -92,6 +93,7 @@ The Hugging Face Space README should include:
 
 - Project name and pitch.
 - GitHub repository link.
+- Social post proof/link.
 - Model name and parameter count.
 - Basic usage instructions.
 - Hackathon/Codex Track note.
@@ -106,6 +108,8 @@ Use this block once the GitHub repository URL is known:
 This Space was built with Codex as the coding agent for the Build Small Hackathon OpenAI Codex Track.
 
 Public GitHub repository: <github-repo-url>
+
+Social post proof: <social-post-url>
 ```
 
 Replace `<github-repo-url>` with the final public repo URL.
@@ -118,18 +122,20 @@ Replace `<github-repo-url>` with the final public repo URL.
 4. Push `main` to GitHub.
 5. Continue implementation with Codex-assisted commits.
 6. Build the Gradio app.
-7. Create the Hugging Face Space.
+7. Create the Hugging Face Space under the official hackathon organization if available.
 8. Add the GitHub repo link to the Space README.
-9. Set up GitHub-to-Hugging Face sync.
-10. Verify the Space runs.
-11. Record demo video.
-12. Submit Space link and required materials.
+9. Add social post proof/link to the Space README.
+10. Set up GitHub-to-Hugging Face sync.
+11. Verify the Space runs.
+12. Record demo video.
+13. Submit Space link and required materials.
 
 ## Acceptance Criteria
 
 - The GitHub repository is public.
 - The GitHub repository has a clear commit history for Codex-assisted work.
 - The Space README links to the GitHub repository.
+- The Space README links to social post proof.
 - The Space runs the Gradio app.
 - The final submission can be evaluated by Codex and human judges without private context.
 

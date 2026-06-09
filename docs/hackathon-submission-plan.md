@@ -45,6 +45,16 @@ Track plan:
 
 - See `docs/openai-codex-track-plan.md`.
 
+## Submission Requirements from Kick-off
+
+- The project must be submitted as a Gradio app.
+- The Space should be hosted under the official hackathon Hugging Face organization when eligible/available.
+- The total parameter count across models used by the submission must be less than or equal to 32B.
+- The submission must include a demo video.
+- The app README must link to proof of a social media post.
+- For the OpenAI Codex Track, the Space README must link to the public GitHub repository with Codex-assisted commits.
+- Multiple submissions are allowed, but resource usage should stay realistic for ZeroGPU/free-tier constraints.
+
 ## MVP Scope
 
 Build a Hugging Face Space with a Gradio app that supports:
@@ -103,8 +113,25 @@ Selection criteria:
 - Handles Indonesian reasonably well.
 - Runs reliably in the Hugging Face Space environment or through an allowed small-model inference path.
 - Has clear model card information for parameter count and licensing.
+- Prefer sponsored/open small models when they fit the task and runtime constraints.
 
 The implementation should keep the model behind an `ArticleGenerator` boundary so the model can be swapped if runtime constraints require it.
+
+Candidate model families to evaluate:
+
+- OpenBMB MiniCPM family for lightweight text/multimodal options.
+- JetBrains Mellum/Milum-style code-aware small models if available and suitable for text drafting.
+- Nvidia NeMo/Neatron small models if accessible through sponsor resources.
+- Cohere/Cohair multilingual models if Indonesian quality becomes the main bottleneck.
+- A reliable Hugging Face-hosted small instruct model as fallback.
+
+Model selection should be documented with:
+
+- Model name.
+- Parameter count.
+- License.
+- Runtime path.
+- Whether it uses sponsor credits, ZeroGPU, local inference, or hosted inference.
 
 ## Build Milestones
 
@@ -137,13 +164,14 @@ The implementation should keep the model behind an `ArticleGenerator` boundary s
 
 ### Milestone 4: Space and Submission
 
-- Create Hugging Face Space.
+- Create Hugging Face Space under the official hackathon organization if available; otherwise prepare a personal Space and document the reason.
 - Deploy Gradio app.
 - Run sample-data smoke test in the Space.
 - Push code to a public GitHub repository with Codex-assisted commit history.
 - Add the public GitHub repository link to the Space README.
 - Build or render the short demo video with Remotion using `docs/remotion-demo-video-prd.md`.
 - Write social post.
+- Add the social post proof/link to the Space README.
 - Prepare submission with Space link, video, and post.
 
 ## Acceptance Criteria
@@ -160,6 +188,8 @@ The implementation should keep the model behind an `ArticleGenerator` boundary s
 - The submission includes a short demo video that shows the full flow from messy context to downloadable Markdown.
 - The GitHub repository is public and linked from the Hugging Face Space README.
 - The repository history includes Codex-attributed commits.
+- The Space README includes proof/link for the required social media post.
+- The Space is under the official hackathon Hugging Face organization when eligible.
 
 ## Risks
 
@@ -169,6 +199,9 @@ The implementation should keep the model behind an `ArticleGenerator` boundary s
 - Prompt output may include too much raw diff unless constrained.
 - Generated prose may sound generic if the prompt lacks concrete details or no rewrite pass is used.
 - Users may paste secrets accidentally, so redaction needs to be visible and conservative.
+- The official hackathon organization may require a specific creation/import flow for Spaces.
+- A sponsor model may be attractive for prizes but too slow or unstable for the demo.
+- Joining the hackathon organization may not automatically grant permission to create Spaces via CLI.
 
 ## Mitigations
 
@@ -179,6 +212,9 @@ The implementation should keep the model behind an `ArticleGenerator` boundary s
 - Add sample input that demonstrates the intended quality.
 - Use clear UI copy that tells users not to paste sensitive data.
 - Keep generated articles as drafts and label them as editable output.
+- Keep a working fallback generation path so the Space remains demoable even if model credits or hosted inference fail.
+- Decide model selection after a quick smoke test rather than optimizing for sponsor fit alone.
+- If CLI Space creation returns `403 Forbidden`, create the Space from the hackathon organization UI or request the required role from organizers.
 
 ## Post-MVP Extensions
 

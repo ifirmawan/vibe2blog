@@ -36,6 +36,8 @@ or, for an organization:
 <hf-org>/vibe2blog
 ```
 
+For hackathon submission, prefer the official hackathon Hugging Face organization as the Space owner when eligible/available. Use a personal Space only as a fallback or temporary deployment target.
+
 ## Expected App Files
 
 Once implementation starts, the repo should include the standard Space runtime files:
@@ -221,6 +223,7 @@ Fix:
 ## Open Decisions
 
 - Final Hugging Face Space repo id.
+- Whether the Space must be created under the official hackathon organization or can start as a personal Space.
 - Whether to use a personal account or hackathon organization Space.
 - Final Gradio SDK version.
 - Whether to add a staging Space.
