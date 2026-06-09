@@ -18,6 +18,44 @@ push to GitHub main
 - GitHub repository: source of truth for development, docs, tests, issues, PRs, and implementation history.
 - Hugging Face Space repository: deployment target for the public Gradio demo.
 
+## Operational Sync Decision
+
+Use token-based Hugging Face CLI sync as the preferred manual deployment path.
+
+Reason:
+
+- SSH push depends on the right key being loaded into `ssh-agent`.
+- Passphrase-protected SSH keys can fail across new terminal sessions.
+- During implementation, token-based `hf upload` successfully synced the Space without requiring SSH passphrase prompts.
+- GitHub remains the canonical code repository; the Space is a deployment target.
+
+Preferred manual sync command:
+
+```bash
+hf upload build-small-hackathon/vibe2blog . . \
+  --repo-type space \
+  --exclude '.git' \
+  --exclude '.git/*' \
+  --exclude '.venv' \
+  --exclude '.venv/*' \
+  --exclude '__pycache__' \
+  --exclude '__pycache__/*' \
+  --exclude '*/__pycache__/*' \
+  --exclude '.pytest_cache' \
+  --exclude '.pytest_cache/*' \
+  --exclude '.DS_Store' \
+  --commit-message "chore: sync Vibe2Blog Space"
+```
+
+Use SSH only as a fallback/debug path. If SSH is used, first verify:
+
+```bash
+ssh -T git@hf.co
+git push --dry-run hf main
+```
+
+If SSH returns an authentication error, use `hf upload` instead of spending time debugging `ssh-agent`.
+
 ## Prerequisites
 
 1. A GitHub repository for this project.
@@ -148,6 +186,43 @@ Recommended setup:
 
 This keeps normal deployment simple while still allowing manual retry when Hugging Face build behavior needs a nudge.
 
+## Manual Sync Procedure
+
+For day-to-day hackathon work:
+
+1. Commit locally with a Codex co-author trailer.
+2. Push to GitHub `origin/main`.
+3. Sync to the Space using token-based `hf upload`.
+4. Verify the Space rebuilds.
+
+Commands:
+
+```bash
+git status --short
+git push origin main
+hf upload build-small-hackathon/vibe2blog . . \
+  --repo-type space \
+  --exclude '.git' \
+  --exclude '.git/*' \
+  --exclude '.venv' \
+  --exclude '.venv/*' \
+  --exclude '__pycache__' \
+  --exclude '__pycache__/*' \
+  --exclude '*/__pycache__/*' \
+  --exclude '.pytest_cache' \
+  --exclude '.pytest_cache/*' \
+  --exclude '.DS_Store' \
+  --commit-message "chore: sync Vibe2Blog Space"
+```
+
+If it is important for `hf/main` to share the exact same Git commit history as GitHub, push by Git HTTPS only after confirming credentials are available:
+
+```bash
+git push --force-with-lease https://huggingface.co/spaces/build-small-hackathon/vibe2blog main
+```
+
+This is optional for normal Space deployment. Content sync is enough for the Space to rebuild.
+
 ## Validation Steps
 
 After adding the workflow:
@@ -170,12 +245,29 @@ After adding the workflow:
 Symptom:
 
 - GitHub Action fails during sync.
+- Manual `hf upload` fails with authentication or permission errors.
 
 Fix:
 
 - Regenerate `HF_TOKEN`.
 - Ensure token has write access.
 - Ensure the secret name is exactly `HF_TOKEN`.
+- Run `hf auth whoami` to confirm the local CLI is authenticated.
+
+### SSH Agent or Passphrase Problems
+
+Symptom:
+
+- `git push hf main` fails with an authentication error.
+- `ssh-add` must be rerun in each session.
+- `ssh -T git@hf.co` connects as anonymous or the push is rejected.
+
+Fix:
+
+- Prefer token-based `hf upload`.
+- Only debug SSH if exact Git history on the Space remote is required.
+- Ensure the SSH public key is registered in Hugging Face settings.
+- Ensure `~/.ssh/config` has a host entry for `hf.co` pointing to the correct identity file.
 
 ### Wrong Space Repo ID
 
@@ -215,7 +307,7 @@ Fix:
 ## Acceptance Criteria
 
 - GitHub is the canonical development repository.
-- Pushing to `main` syncs the repository to the Hugging Face Space.
+- Pushing to `main` updates GitHub, and token-based sync updates the Hugging Face Space.
 - The Space rebuilds after sync.
 - The deployed app can run the sample Vibe2Blog flow.
 - The workflow can also be triggered manually.

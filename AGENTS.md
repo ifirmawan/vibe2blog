@@ -26,6 +26,8 @@ Build the Hugging Face Space experience before CLI or slash-command workflows. T
 
 Use GitHub as the canonical source repository and Hugging Face Space as the deployment target. Follow `docs/github-to-huggingface-sync-plan.md` when setting up deployment automation.
 
+For manual Hugging Face Space sync, prefer token-based `hf upload` over SSH push. SSH is passphrase/agent-sensitive and should only be used as a fallback or when exact Git history on the Space remote is required.
+
 For the OpenAI Codex Track, keep the public GitHub repository and Space README aligned with `docs/openai-codex-track-plan.md`.
 
 ## Core Principles
