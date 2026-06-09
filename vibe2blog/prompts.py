@@ -32,6 +32,7 @@ LANGUAGE_LABELS = {
 
 
 def build_article_prompt(context: SessionContext) -> str:
+    """Assemble the main article prompt from normalized, already-redacted context."""
     labels = LANGUAGE_LABELS[context.language]
     snippets_instruction = (
         "Include short, selected code snippets only when they clarify the story."
@@ -77,6 +78,7 @@ Verification notes:
 
 
 def build_quality_prompt(markdown: str, context: SessionContext) -> str:
+    """Ask the model for an editorial rewrite without changing the factual source."""
     labels = LANGUAGE_LABELS[context.language]
     return f"""Improve this Markdown draft in {labels["name"]}.
 
@@ -94,4 +96,3 @@ Return only the improved Markdown.
 Draft:
 {markdown}
 """
-

@@ -123,9 +123,9 @@ with gr.Blocks(
         with gr.Column(scale=5):
             topic = gr.Textbox(label="Topic or working title", placeholder="Building Vibe2Blog for the Build Small Hackathon")
             session_summary = gr.Textbox(
-                label="Session summary",
+                label="Session summary or raw agent transcript",
                 lines=8,
-                placeholder="Paste the most important notes from your vibe coding session...",
+                placeholder="Paste a short summary or raw Claude Code/Codex-style session transcript...",
             )
             with gr.Accordion("Optional context", open=False):
                 transcript_excerpt = gr.Textbox(label="Transcript excerpt", lines=5)
@@ -149,7 +149,7 @@ with gr.Blocks(
             sample_button = gr.Button("Load sample data", variant="secondary")
             generate_button = gr.Button("Generate Markdown", variant="primary")
             gr.Markdown(
-                "Do not paste secrets. Vibe2Blog redacts common token patterns before building the prompt.",
+                "Do not paste secrets. Vibe2Blog redacts common token patterns and can summarize raw agent transcripts before building the prompt.",
                 elem_classes=["vibe2blog-note"],
             )
 

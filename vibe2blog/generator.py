@@ -28,6 +28,7 @@ class GenerationResult:
 
 class ArticleGenerator:
     def generate(self, context: SessionContext) -> GenerationResult:
+        """Generate a Markdown article from normalized session context."""
         raise NotImplementedError
 
 
@@ -35,6 +36,7 @@ class TemplateArticleGenerator(ArticleGenerator):
     provider_name = "template-fallback"
 
     def generate(self, context: SessionContext) -> GenerationResult:
+        """Generate deterministic drafts so tests and demos work without a model key."""
         prompt = build_article_prompt(context)
         markdown = build_template_article(context)
         quality_notes = score_quality(markdown)
@@ -54,10 +56,12 @@ class HuggingFaceInferenceGenerator(ArticleGenerator):
     provider_name = "huggingface-inference"
 
     def __init__(self, model: str, token: str | None = None):
+        """Store the hosted model name and optional Hugging Face token override."""
         self.model = model
         self.token = token or os.getenv("HF_TOKEN")
 
     def generate(self, context: SessionContext) -> GenerationResult:
+        """Generate article Markdown through Hugging Face hosted inference."""
         try:
             from huggingface_hub import InferenceClient
         except ImportError as exc:
@@ -97,6 +101,7 @@ class HuggingFaceInferenceGenerator(ArticleGenerator):
 
 
 def get_default_generator() -> ArticleGenerator:
+    """Select hosted inference when configured, otherwise use deterministic fallback."""
     model = os.getenv("VIBE2BLOG_MODEL", "").strip()
     if model and os.getenv("HF_TOKEN"):
         return HuggingFaceInferenceGenerator(model=model)
@@ -104,55 +109,114 @@ def get_default_generator() -> ArticleGenerator:
 
 
 def build_template_article(context: SessionContext) -> str:
+    """Route deterministic generation to the selected language and tone template."""
     title = context.safe_topic
+    tone = normalized_tone(context)
     if context.language == "id":
-        if normalized_tone(context) == "tutorial":
+        if tone == "tutorial":
             return build_indonesian_tutorial_template(context, title)
-        return build_indonesian_template(context, title)
-    if normalized_tone(context) == "tutorial":
+        if tone == "concise":
+            return build_indonesian_concise_template(context, title)
+        if tone == "narrative":
+            return build_indonesian_narrative_template(context, title)
+        return build_indonesian_reflective_template(context, title)
+    if tone == "tutorial":
         return build_english_tutorial_template(context, title)
-    return build_english_template(context, title)
+    if tone == "concise":
+        return build_english_concise_template(context, title)
+    if tone == "narrative":
+        return build_english_narrative_template(context, title)
+    return build_english_reflective_template(context, title)
 
 
-def build_indonesian_template(context: SessionContext, title: str) -> str:
+def build_indonesian_reflective_template(context: SessionContext, title: str) -> str:
     frontmatter = build_frontmatter(title, "id") if context.include_frontmatter else ""
-    code_section = (
-        "\n\nContoh potongan konteks teknis yang paling relevan:\n\n```diff\n"
-        f"{trim_text(context.git_diff, 900)}\n```"
-        if context.include_code_snippets and context.git_diff
-        else ""
-    )
+    code_section = build_code_section(context, language="id")
+    verification = context.verification_notes or "Perbaikan perlu diuji ulang pada skenario yang sebelumnya gagal, lalu dibandingkan dengan perilaku sebelum perubahan."
     return f"""{frontmatter}## Masalah
 
-Sesi ini berangkat dari kebutuhan untuk mengubah aktivitas vibe coding menjadi draft artikel Markdown yang bisa dibaca ulang, diedit, dan dibagikan.
+Sesi ini berangkat dari masalah berikut: {title}.
 
-## Konteks Sesi
+## Apa yang Ditemukan
 
-{context.session_summary}
+{as_quote_block(context.session_summary)}
 
-## Proses Implementasi
+## Keputusan Perbaikan
 
-Fokus implementasi diarahkan pada alur yang praktis: pengguna memberi ringkasan sesi, memilih bahasa dan gaya tulisan, lalu Vibe2Blog menyusun cerita teknis dari konteks tersebut. Transkrip dan diff diperlakukan sebagai bahan pendukung, bukan sesuatu yang harus ditempel utuh.
+Bagian penting dari sesi ini adalah memperbaiki asumsi yang tidak sesuai dengan perilaku nyata di runtime. Alih-alih mengubah banyak area sekaligus, perubahan diarahkan ke titik yang benar-benar menyebabkan workflow gagal.
 
-## Keputusan Teknis
-
-- Gradio menjadi antarmuka utama untuk demo hackathon.
-- Output tetap Markdown agar mudah dipindahkan ke blog atau dokumentasi.
-- Bahasa `{context.language}` dipilih agar heading, frontmatter, dan narasi konsisten.
-- Redaksi secret dilakukan sebelum konteks dipakai untuk membuat draft.
-- Editorial quality pass dipakai untuk mengurangi tulisan generik dan memperkuat detail konkret.{code_section}
+{code_section}
 
 ## Verifikasi
 
-{context.verification_notes or "Draft ini perlu diverifikasi lewat sample data, validasi Markdown, dan smoke test di Hugging Face Space."}
+{verification}
 
-## Pelajaran
+## Refleksi
 
-Sesi ini menunjukkan bahwa hasil kerja dengan AI agent tidak harus berhenti sebagai percakapan. Dengan struktur yang tepat, keputusan kecil, tradeoff, dan hasil verifikasi bisa berubah menjadi catatan lapangan yang berguna.
+Perbaikan ini menarik karena akar masalahnya bukan pada keseluruhan fitur, melainkan pada detail kecil yang menghubungkan asumsi kode dengan perilaku framework atau platform. Detail semacam ini mudah terlewat ketika kita hanya melihat gejala dari luar.
 
 ## Kesimpulan
 
-Vibe2Blog membantu menjaga pengetahuan dari sesi agentic coding tetap hidup: bukan sebagai log mentah, tetapi sebagai draft tulisan yang siap diedit oleh manusia.
+Pelajaran utamanya: ketika sebuah workflow gagal, verifikasi dulu nilai, state, atau kondisi yang benar-benar terjadi di runtime sebelum memperbesar cakupan perubahan. Perubahan kecil yang tepat sering lebih aman daripada patch yang terlalu luas.
+"""
+
+
+def build_indonesian_concise_template(context: SessionContext, title: str) -> str:
+    frontmatter = build_frontmatter(title, "id") if context.include_frontmatter else ""
+    code_section = build_code_section(context, language="id")
+    verification = context.verification_notes or "Uji ulang skenario yang sebelumnya gagal dan pastikan jalur akses lain tidak ikut terbuka."
+    return f"""{frontmatter}## Ringkasan
+
+- Masalah: {title}
+- Inti temuan: ada perbedaan antara asumsi kode dan kondisi runtime.
+- Arah perbaikan: ubah titik yang keliru tanpa memperbesar cakupan patch.
+
+## Konteks Penting
+
+{as_quote_block(context.session_summary)}
+
+## Perubahan
+
+- Fokus pada titik kode yang memicu gejala utama.
+- Cocokkan state, nilai, atau constraint yang dicek kode dengan kondisi yang benar-benar dipakai framework.
+- Tambahkan catatan singkat agar alasan perubahan jelas untuk maintainer berikutnya.{code_section}
+
+## Verifikasi
+
+{verification}
+
+## Catatan Lanjutan
+
+- Jangan mengabaikan diagnostic IDE begitu saja, tetapi bedakan false positive dari error runtime.
+- Simpan test manual atau automated test untuk skenario yang sebelumnya gagal.
+"""
+
+
+def build_indonesian_narrative_template(context: SessionContext, title: str) -> str:
+    frontmatter = build_frontmatter(title, "id") if context.include_frontmatter else ""
+    code_section = build_code_section(context, language="id")
+    verification = context.verification_notes or "Setelah perubahan, skenario yang sama perlu dijalankan lagi untuk memastikan gejalanya hilang."
+    return f"""{frontmatter}## Pembuka
+
+Bug ini terlihat sederhana dari luar: {title}. Tetapi sesi coding menunjukkan bahwa kegagalannya tersembunyi di detail kecil antara asumsi kode dan perilaku framework atau platform.
+
+## Momen Menemukan Akar Masalah
+
+{as_quote_block(context.session_summary)}
+
+## Perubahan Kecil yang Menentukan
+
+Yang membuat perbaikan ini penting adalah ukurannya kecil tetapi tepat sasaran. Alih-alih mengubah seluruh fitur, perubahan diarahkan ke kondisi yang salah membaca kebutuhan runtime.
+
+{code_section}
+
+## Setelah Diuji
+
+{verification}
+
+## Penutup
+
+Sesi ini mengingatkan bahwa debugging sering berjalan dari gejala besar ke detail kecil. Ketika detail itu akhirnya cocok dengan kenyataan runtime, masalah yang tampak rumit bisa selesai dengan perubahan yang sangat terukur.
 """
 
 
@@ -172,15 +236,15 @@ Masalah yang terlihat dari sesi ini:
 
 ## Akar Masalah
 
-Berdasarkan catatan sesi, penyebab utamanya adalah mismatch antara asumsi kode dan nilai yang benar-benar dikirim oleh sistem saat runtime. Dalam kasus seperti ini, langkah pentingnya adalah membaca helper/controller yang terlibat, mencari kondisi permission yang gagal, lalu membandingkan nama object/context yang dicek kode dengan nilai aktual dari framework.
+Berdasarkan catatan sesi, penyebab utamanya adalah mismatch antara asumsi kode dan kondisi yang benar-benar terjadi saat runtime. Dalam kasus seperti ini, langkah pentingnya adalah membaca file yang terlibat, mencari kondisi yang memicu gejala, lalu membandingkan logika kode dengan nilai, state, atau constraint aktual dari framework.
 
 ## Langkah Perbaikan
 
-1. Buka file atau helper yang menangani permission/authentication.
-2. Cari kondisi yang membedakan object type, context, atau user role.
-3. Cocokkan nilai yang dicek kode dengan nilai yang dipakai framework saat request berjalan.
-4. Ubah kondisi hanya pada bagian yang salah, tanpa memperluas permission lebih dari kebutuhan.
-5. Simpan catatan mengapa nilai tersebut benar agar pembaca berikutnya tidak mengulang asumsi lama.{code_section}
+1. Buka file yang paling dekat dengan gejala yang dilaporkan.
+2. Cari kondisi, state, atau perhitungan layout/data yang menentukan perilaku tersebut.
+3. Cocokkan asumsi kode dengan nilai yang dipakai framework saat workflow berjalan.
+4. Ubah hanya bagian yang salah, tanpa memperluas patch ke area yang tidak terkait.
+5. Simpan catatan singkat agar pembaca berikutnya memahami alasan perubahan.{code_section}
 
 ## Cara Menguji
 
@@ -188,53 +252,102 @@ Berdasarkan catatan sesi, penyebab utamanya adalah mismatch antara asumsi kode d
 
 ## Kenapa Perbaikan Ini Bekerja
 
-Perbaikan ini bekerja karena kode tidak lagi mengecek nilai object type yang keliru. Setelah kondisi permission memakai nilai runtime yang benar, pengguna yang memang berhak dapat melewati pengecekan tanpa membuka akses untuk skenario lain.
+Perbaikan ini bekerja karena kode kembali selaras dengan kondisi runtime yang sebenarnya. Setelah logika memakai nilai atau state yang benar, skenario yang sah dapat berjalan tanpa mengubah area lain yang tidak terkait.
 
 ## Catatan Penutup
 
-Bug permission sering terlihat seperti masalah token atau role, padahal akar masalahnya bisa sesederhana nama object type yang berbeda dari asumsi awal. Selalu verifikasi nilai yang dikirim framework sebelum memperluas aturan akses.
+Bug sering terlihat lebih besar dari akar masalahnya. Selalu verifikasi nilai, state, dan constraint yang dikirim framework sebelum memperluas cakupan perubahan.
 """
 
 
-def build_english_template(context: SessionContext, title: str) -> str:
+def build_english_reflective_template(context: SessionContext, title: str) -> str:
     frontmatter = build_frontmatter(title, "en") if context.include_frontmatter else ""
-    code_section = (
-        "\n\nRelevant technical context:\n\n```diff\n"
-        f"{trim_text(context.git_diff, 900)}\n```"
-        if context.include_code_snippets and context.git_diff
-        else ""
-    )
+    code_section = build_code_section(context, language="en")
+    verification = context.verification_notes or "The fix should be retested against the scenario that failed before and compared with the previous behavior."
     return f"""{frontmatter}## Problem
 
-This session started from a practical need: turning vibe coding activity into an editable Markdown article that preserves the reasoning behind the work.
+This session focused on the following problem: {title}.
 
-## Session Context
+## What We Found
 
-{context.session_summary}
+{as_quote_block(context.session_summary)}
 
-## Implementation Story
+## Fix Decision
 
-The implementation focuses on a direct workflow: provide session context, choose language and tone, then let Vibe2Blog shape the material into a technical narrative. Transcript excerpts and diffs are supporting material, not raw content dumps.
+The important move was to correct the assumption that did not match runtime behavior. Instead of changing broad areas at once, the fix targets the condition that caused the workflow to fail.
 
-## Technical Decisions
-
-- Gradio is the primary interface for the hackathon demo.
-- Markdown remains the main output because it is portable.
-- Language `{context.language}` keeps headings, frontmatter, and prose consistent.
-- Likely secrets are redacted before draft generation.
-- The editorial quality pass reduces generic prose and strengthens concrete detail.{code_section}
+{code_section}
 
 ## Verification
 
-{context.verification_notes or "This draft should be verified with sample data, Markdown validation, and a Hugging Face Space smoke test."}
+{verification}
 
-## Lessons Learned
+## Reflection
 
-Agentic coding sessions contain more than code changes. With the right structure, decisions, tradeoffs, and validation steps can become useful field notes.
+The interesting part of this fix is that the visible symptom looked broader than the actual cause. The problem was not the whole feature, but a small mismatch between the code's assumption and the framework or platform behavior.
 
 ## Conclusion
 
-Vibe2Blog keeps the knowledge from an AI-assisted coding session alive as a human-editable article draft rather than a raw conversation log.
+When a workflow fails, verify the real runtime values, state, and constraints before widening the patch. A small, precise change is usually safer than a broad workaround.
+"""
+
+
+def build_english_concise_template(context: SessionContext, title: str) -> str:
+    frontmatter = build_frontmatter(title, "en") if context.include_frontmatter else ""
+    code_section = build_code_section(context, language="en")
+    verification = context.verification_notes or "Retest the failing scenario and confirm unrelated access paths remain constrained."
+    return f"""{frontmatter}## Summary
+
+- Problem: {title}
+- Key finding: the code assumption did not match the runtime condition.
+- Fix direction: change the incorrect condition without widening the patch.
+
+## Important Context
+
+{as_quote_block(context.session_summary)}
+
+## Change
+
+- Inspect the code path closest to the visible symptom.
+- Match the checked value, state, or constraint with what the framework actually uses.
+- Add a short code note so the reason stays visible to future maintainers.{code_section}
+
+## Verification
+
+{verification}
+
+## Follow-up Notes
+
+- Keep the failing request as a regression scenario.
+- Treat IDE diagnostics separately from runtime behavior when working inside a framework environment.
+"""
+
+
+def build_english_narrative_template(context: SessionContext, title: str) -> str:
+    frontmatter = build_frontmatter(title, "en") if context.include_frontmatter else ""
+    code_section = build_code_section(context, language="en")
+    verification = context.verification_notes or "After the change, rerun the same scenario to confirm the symptom is gone."
+    return f"""{frontmatter}## Opening
+
+From the outside, the bug looked straightforward: {title}. The session showed that the real failure lived in a small gap between the code's assumption and the framework or platform call path.
+
+## Finding the Root Cause
+
+{as_quote_block(context.session_summary)}
+
+## The Small Change That Mattered
+
+The useful part of the fix was its precision. Instead of rewriting the whole feature, the change corrected the condition that was reading the wrong runtime signal.
+
+{code_section}
+
+## After Testing
+
+{verification}
+
+## Closing
+
+This is the kind of debugging session where a small detail changes the whole outcome. Once the code matched what the framework actually required, the failing scenario could succeed without loosening unrelated behavior.
 """
 
 
@@ -254,15 +367,15 @@ The session showed this failure mode:
 
 ## Root Cause
 
-The core issue was a mismatch between what the code expected and what the framework actually passed at runtime. For this kind of bug, the useful path is to read the permission or authentication helper, find the condition that blocks the request, and compare the object/context names in code with the framework's real values.
+The core issue was a mismatch between what the code expected and what the framework actually did at runtime. For this kind of bug, the useful path is to read the closest code path, find the condition that triggers the symptom, and compare the code's assumptions with the framework's real values or constraints.
 
 ## Fix Steps
 
-1. Open the helper or controller that handles permissions/authentication.
-2. Find the condition that checks object type, context, or user role.
-3. Compare the checked value with the value the framework passes during the request.
-4. Update only the incorrect condition, without widening permissions beyond the intended user action.
-5. Leave a short note in code explaining the framework value so the old assumption does not return.{code_section}
+1. Open the file closest to the reported symptom.
+2. Find the condition, state, or calculation that controls the behavior.
+3. Compare the checked value with what the framework uses during the workflow.
+4. Update only the incorrect condition, without expanding the patch beyond the intended behavior.
+5. Leave a short note explaining the runtime value so the old assumption does not return.{code_section}
 
 ## How to Test
 
@@ -270,15 +383,16 @@ The core issue was a mismatch between what the code expected and what the framew
 
 ## Why This Works
 
-The fix works because the permission check now uses the runtime object type that the framework actually sends. Once the condition matches reality, the legitimate user action can pass while unrelated access paths stay constrained.
+The fix works because the code now uses the runtime signal that the framework actually provides. Once the condition matches reality, the failing scenario can pass while unrelated behavior stays constrained.
 
 ## Closing Notes
 
-Permission bugs can look like token or role problems, but sometimes the root cause is a naming mismatch. Verify the framework-provided values before broadening access rules.
+Bugs often look larger than they are, but sometimes the root cause is a small mismatch in naming, state, layout, or data shape. Verify framework-provided values before broadening the fix.
 """
 
 
 def build_frontmatter(title: str, language: str) -> str:
+    """Create minimal YAML frontmatter compatible with static blog engines."""
     escaped_title = title.replace('"', '\\"')
     return f"""---
 title: "{escaped_title}"
@@ -290,6 +404,7 @@ language: "{language}"
 
 
 def build_code_section(context: SessionContext, *, language: str) -> str:
+    """Include a bounded diff excerpt only when the user enables code snippets."""
     if not context.include_code_snippets or not context.git_diff:
         return ""
     label = (
@@ -301,15 +416,18 @@ def build_code_section(context: SessionContext, *, language: str) -> str:
 
 
 def as_quote_block(text: str) -> str:
+    """Display extracted context as a Markdown quote without dumping unlimited text."""
     lines = trim_text(text, 1400).splitlines()
     return "\n".join(f"> {line}" if line else ">" for line in lines)
 
 
 def normalized_tone(context: SessionContext) -> str:
+    """Normalize tone values from UI/CLI-style inputs before template routing."""
     return context.tone.strip().lower()
 
 
 def editorial_rewrite(markdown: str, context: SessionContext) -> str:
+    """Inject concrete transcript notes into legacy template sections when present."""
     if context.transcript_excerpt and "## Konteks Sesi" in markdown:
         return markdown.replace(
             "## Proses Implementasi",
@@ -326,6 +444,7 @@ def editorial_rewrite(markdown: str, context: SessionContext) -> str:
 
 
 def score_quality(markdown: str) -> str:
+    """Return lightweight rubric feedback for the generated draft metadata panel."""
     lower = markdown.lower()
     found = [phrase for phrase in GENERIC_PHRASES if phrase in lower]
     if found:
@@ -336,6 +455,7 @@ def score_quality(markdown: str) -> str:
 
 
 def extract_title(markdown: str) -> str:
+    """Prefer frontmatter title, then fall back to a top-level Markdown heading."""
     frontmatter_match = re.search(r'^title:\s*"(.+?)"', markdown, re.MULTILINE)
     if frontmatter_match:
         return frontmatter_match.group(1)
@@ -344,6 +464,7 @@ def extract_title(markdown: str) -> str:
 
 
 def trim_text(text: str, limit: int) -> str:
+    """Bound prompt-visible snippets so long transcripts stay manageable."""
     stripped = text.strip()
     if len(stripped) <= limit:
         return stripped

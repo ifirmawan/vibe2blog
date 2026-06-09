@@ -22,11 +22,16 @@ class SessionContext:
 
     @property
     def safe_topic(self) -> str:
+        """Return the user title, or a stable fallback inferred from the session."""
         return self.topic.strip() or self.inferred_topic
 
     @property
     def inferred_topic(self) -> str:
+        """Use the first summary line as a lightweight title when no topic is provided."""
         first_line = self.session_summary.strip().splitlines()[0]
+        for prefix in ("Masalah awal:", "Initial problem:"):
+            if first_line.lower().startswith(prefix.lower()):
+                first_line = first_line[len(prefix) :].strip()
         return first_line[:72].strip(" .") or "Vibe Coding Field Notes"
 
 
@@ -44,6 +49,7 @@ def normalize_context(
     include_frontmatter: bool = True,
     editorial_quality_pass: bool = True,
 ) -> SessionContext:
+    """Validate UI/API inputs and collapse optional blanks into safe defaults."""
     summary = session_summary.strip()
     if not summary:
         raise ValueError("Session summary is required.")
@@ -66,4 +72,3 @@ def normalize_context(
         include_frontmatter=include_frontmatter,
         editorial_quality_pass=editorial_quality_pass,
     )
-

@@ -46,9 +46,9 @@ Current artifacts:
 
 ## What It Does
 
-The planned app will let a user paste:
+The app lets a user paste:
 
-- A vibe coding session summary
+- A vibe coding session summary or raw Claude Code/Codex-style transcript
 - Optional transcript excerpt
 - Optional git diff
 - Optional verification notes
@@ -71,6 +71,13 @@ The app will generate:
 - Lessons learned
 - An editorial quality pass for more natural, specific prose
 - A downloadable `.md` file
+
+Raw agent transcripts are normalized into a compact session summary before article generation. This keeps the draft focused on the problem, findings, changes, verification, related files, and outcome instead of copying a long tool log verbatim.
+
+Transcript extraction has two paths:
+
+- Deterministic local extraction for Claude Code/Codex-style tool logs.
+- Optional Modal vLLM extraction when `MODAL_VLLM_BASE_URL` is configured.
 
 ## Hackathon Fit
 
@@ -97,7 +104,7 @@ For the OpenAI Codex Track:
 ### 1. Core Generator
 
 - Define the `SessionContext` data shape.
-- Normalize user input.
+- Normalize user input and extract signal from raw agent transcripts.
 - Redact likely secrets.
 - Build language-aware prompts.
 - Validate generated Markdown.
@@ -215,6 +222,16 @@ export VIBE2BLOG_MODEL="<small-instruct-model-under-32b>"
 ```
 
 Without `HF_TOKEN` and `VIBE2BLOG_MODEL`, the app uses a deterministic template fallback so the demo and tests stay runnable.
+
+Optional Modal transcript extraction:
+
+```bash
+export MODAL_VLLM_BASE_URL="https://your-workspace--your-app-serve.modal.run"
+export MODAL_VLLM_MODEL="llm"
+.venv/bin/python app.py
+```
+
+The Modal endpoint should expose an OpenAI-compatible `/v1/chat/completions` route, such as the vLLM server pattern from Modal's official example.
 
 When implementing:
 

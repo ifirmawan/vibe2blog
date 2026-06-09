@@ -28,7 +28,7 @@ Produk utama untuk hackathon adalah Gradio app yang di-host sebagai Hugging Face
 
 ## User Stories
 
-1. As a developer, I want to paste a vibe coding session summary, so that I can turn the session into a blog draft.
+1. As a developer, I want to paste a vibe coding session summary or raw agent transcript, so that I can turn the session into a blog draft.
 2. As a developer, I want to paste an optional transcript excerpt, so that the article can preserve important conversation details.
 3. As a developer, I want to paste an optional git diff, so that the article can describe concrete code changes.
 4. As a developer, I want to provide a topic or working title, so that the article has a clear editorial direction.
@@ -85,6 +85,8 @@ Produk utama untuk hackathon adalah Gradio app yang di-host sebagai Hugging Face
 - The core pipeline will use four major stages: normalize context, redact sensitive values, build prompt, generate article.
 - A `SessionContext` module will represent normalized input. It will include topic, session summary, optional transcript, optional diff, verification notes, language, tone, and audience.
 - A `SecretRedactor` module will scan collected context for common secret patterns before prompt construction.
+- A transcript extraction layer will compact raw Claude Code/Codex-style logs into problem, findings, changes, verification, files, and outcome before article generation.
+- The extraction layer should use deterministic local parsing as the safe fallback and may use a Modal-hosted OpenAI-compatible vLLM endpoint when `MODAL_VLLM_BASE_URL` is configured.
 - A `PromptBuilder` module will combine normalized context with language-specific prompt fragments.
 - An `ArticleGenerator` module will call the configured small model and return Markdown content.
 - A `MarkdownValidator` module will check that generated content has valid frontmatter, a non-empty title, useful body sections, and no obvious placeholder text.
@@ -127,7 +129,7 @@ Produk utama untuk hackathon adalah Gradio app yang di-host sebagai Hugging Face
 
 ## Out of Scope
 
-- Automatically extracting full private transcripts from Codex, Claude Code, Cursor, or other agentic coding tools.
+- Automatically scraping full private transcripts from Codex, Claude Code, Cursor, or other agentic coding tools.
 - Automatically publishing to a CMS, newsletter, or static site repository.
 - Building the CLI before the Gradio hackathon MVP.
 - Supporting every LLM provider in the first version.

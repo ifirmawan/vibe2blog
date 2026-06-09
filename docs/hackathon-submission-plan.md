@@ -60,6 +60,7 @@ Track plan:
 Build a Hugging Face Space with a Gradio app that supports:
 
 - Session summary input.
+- Raw Claude Code/Codex-style transcript extraction from pasted input.
 - Optional transcript excerpt input.
 - Optional git diff input.
 - Optional verification notes input.
@@ -86,6 +87,7 @@ Do not spend hackathon time on:
 - Social card generation.
 - Complex project import from a git repository.
 - Featured image generation with Modal.
+- Modal-hosted vLLM extraction as an optional enhancement, while keeping deterministic extraction as the no-credit fallback.
 
 ## Demo Story
 
@@ -116,6 +118,8 @@ Selection criteria:
 - Prefer sponsored/open small models when they fit the task and runtime constraints.
 
 The implementation should keep the model behind an `ArticleGenerator` boundary so the model can be swapped if runtime constraints require it.
+
+Transcript extraction can optionally use Modal credits through an OpenAI-compatible vLLM service. The Space should read `MODAL_VLLM_BASE_URL` and `MODAL_VLLM_MODEL`; if unavailable or failing, it must fall back to deterministic local extraction so the demo remains usable.
 
 Candidate model families to evaluate:
 

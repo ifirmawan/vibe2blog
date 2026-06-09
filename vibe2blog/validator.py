@@ -11,6 +11,7 @@ class ValidationResult:
 
 
 def validate_markdown(markdown: str, *, require_frontmatter: bool = True) -> ValidationResult:
+    """Check generated drafts for the minimum structure expected by the UI."""
     issues: list[str] = []
     content = markdown.strip()
     if not content:
@@ -24,4 +25,3 @@ def validate_markdown(markdown: str, *, require_frontmatter: bool = True) -> Val
     if "[placeholder]" in content.lower() or "lorem ipsum" in content.lower():
         issues.append("Placeholder text detected.")
     return ValidationResult(valid=not issues, issues=issues)
-
