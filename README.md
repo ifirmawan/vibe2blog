@@ -13,3 +13,194 @@ short_description: Turn agentic coding sessions into editable Markdown notes
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+# Vibe2Blog
+
+Vibe2Blog is a Gradio app that turns vibe coding session context into editable Markdown blog drafts.
+
+It is designed for developers who code with AI agents and want to preserve the useful reasoning that usually disappears after a session: the original problem, implementation path, technical decisions, verification notes, and lessons learned.
+
+This project is being prepared as a Build Small Hackathon submission.
+
+## Links
+
+- Public GitHub repository: `<add-github-repo-url>`
+- Hugging Face Space: `<add-huggingface-space-url>`
+
+For the OpenAI Codex Track, the Hugging Face Space README must include the public GitHub repository link.
+
+## Project Status
+
+Planning and product definition are complete. Implementation is intended to happen step by step.
+
+Current artifacts:
+
+- Product PRD: [`docs/prd-blog-from-vibe-coding.md`](docs/prd-blog-from-vibe-coding.md)
+- Hackathon submission plan: [`docs/hackathon-submission-plan.md`](docs/hackathon-submission-plan.md)
+- OpenAI Codex Track plan: [`docs/openai-codex-track-plan.md`](docs/openai-codex-track-plan.md)
+- Remotion demo video PRD: [`docs/remotion-demo-video-prd.md`](docs/remotion-demo-video-prd.md)
+- GitHub to Hugging Face sync plan: [`docs/github-to-huggingface-sync-plan.md`](docs/github-to-huggingface-sync-plan.md)
+- WordPress publishing extension PRD: [`docs/prd-wordpress-publishing.md`](docs/prd-wordpress-publishing.md)
+- Featured image generation PRD: [`docs/prd-featured-image-modal.md`](docs/prd-featured-image-modal.md)
+- Agent instructions: [`AGENTS.md`](AGENTS.md)
+
+## What It Does
+
+The planned app will let a user paste:
+
+- A vibe coding session summary
+- Optional transcript excerpt
+- Optional git diff
+- Optional verification notes
+
+Then the user can choose:
+
+- Output language: Indonesian (`id`) or English (`en`)
+- Tone
+- Target audience
+- Whether to include frontmatter
+- Whether to include code snippets
+
+The app will generate:
+
+- A Markdown article draft
+- YAML frontmatter
+- A clear engineering story
+- Technical decisions
+- Verification notes
+- Lessons learned
+- An editorial quality pass for more natural, specific prose
+- A downloadable `.md` file
+
+## Hackathon Fit
+
+Vibe2Blog is planned as a Gradio app hosted on Hugging Face Spaces.
+
+The hackathon MVP should:
+
+- Use a small model within the Build Small Hackathon constraint of <=32B parameters.
+- Be usable directly from a Hugging Face Space.
+- Include sample data so judges can try it quickly.
+- Generate both Indonesian and English Markdown output.
+- Include a short demo video built with Remotion.
+
+For the OpenAI Codex Track:
+
+- Build the Space with Codex as the coding agent.
+- Push the code to a public GitHub repository.
+- Keep Codex-attributed commits in the repository history.
+- Add the public GitHub repository link to the Hugging Face Space README.
+
+## Implementation Roadmap
+
+### 1. Core Generator
+
+- Define the `SessionContext` data shape.
+- Normalize user input.
+- Redact likely secrets.
+- Build language-aware prompts.
+- Validate generated Markdown.
+- Add an editorial quality pass to reduce generic prose.
+- Export Markdown with a deterministic filename.
+
+### 2. Gradio App
+
+- Build the main Gradio interface.
+- Add sample input.
+- Add language, tone, and audience controls.
+- Display generated Markdown.
+- Add copy and download actions.
+- Add clear error states.
+
+### 3. Small Model Integration
+
+- Select a model that fits the <=32B parameter constraint.
+- Integrate the model behind an `ArticleGenerator` boundary.
+- Verify Indonesian and English output quality.
+- Document model name, parameter count, and runtime assumptions.
+
+### 4. Hugging Face Space
+
+- Deploy the Gradio app as a Space.
+- Run a smoke test with sample data.
+- Confirm generation latency is acceptable.
+- Confirm Markdown download works.
+- Sync from GitHub to the Space using the planned GitHub Actions workflow.
+- Add the public GitHub repository link to the Space README for the Codex Track.
+
+### 5. Demo Video
+
+- Build the Remotion demo video described in [`docs/remotion-demo-video-prd.md`](docs/remotion-demo-video-prd.md).
+- Show the flow from messy coding context to downloadable Markdown.
+- Include the Space URL placeholder or final Space URL.
+
+### 6. Future Extensions
+
+- CLI support.
+- Slash command adapters for agentic coding tools.
+- More languages.
+- More model/provider options.
+- Blog publishing integrations.
+- WordPress draft publishing.
+- Featured image generation with Modal.
+
+## Planned Architecture
+
+The implementation should keep product logic reusable outside Gradio.
+
+Recommended modules:
+
+- `SessionContext`: normalized session data.
+- `SecretRedactor`: masks token-like values before prompting.
+- `PromptBuilder`: creates language-aware prompts.
+- `ArticleGenerator`: model/provider boundary.
+- `MarkdownValidator`: checks output structure.
+- `EditorialQualityPass`: critiques and rewrites drafts for specificity and readability.
+- `MarkdownExporter`: creates downloadable Markdown.
+- `GradioApp`: UI and event wiring.
+
+Future CLI and slash-command workflows should call the same core modules.
+
+## Example Use Case
+
+Input summary:
+
+```text
+We changed the project direction from CLI-first to Gradio-first for the Build Small Hackathon.
+The app should turn vibe coding notes into Markdown field notes.
+It should support Indonesian and English output.
+It should redact likely secrets before generating.
+```
+
+Expected output:
+
+```md
+---
+title: "Mengubah Sesi Vibe Coding Menjadi Catatan Lapangan"
+date: "2026-06-06"
+tags: ["agentic-ai", "gradio", "markdown"]
+language: "id"
+---
+
+## Masalah
+
+Sesi coding dengan AI sering menghasilkan keputusan teknis yang penting, tetapi konteksnya mudah hilang setelah percakapan selesai.
+```
+
+## Development Notes
+
+This repository is currently documentation-first. Start with the PRD and implement the smallest useful Gradio MVP before adding CLI or slash-command support.
+
+When implementing:
+
+- Keep the first screen as the working generator.
+- Keep tests focused on observable behavior.
+- Do not depend on exact model prose in tests.
+- Keep model-specific code isolated.
+- Keep generated articles as editable drafts.
+- Use prompt, examples, and rewrite passes before considering fine-tuning.
+
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0.
+
+See [`LICENSE`](LICENSE).
