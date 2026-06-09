@@ -65,7 +65,7 @@ sdk: gradio
 sdk_version: 5.0.0
 app_file: app.py
 pinned: false
-license: mit
+license: gpl-3.0
 ---
 ```
 

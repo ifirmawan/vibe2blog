@@ -1,10 +1,10 @@
 ---
-title: Vibe2blog
-emoji: 😻
-colorFrom: indigo
-colorTo: indigo
+title: Vibe2Blog
+emoji: 📝
+colorFrom: green
+colorTo: blue
 sdk: gradio
-sdk_version: 6.17.3
+sdk_version: 5.50.0
 python_version: '3.13'
 app_file: app.py
 pinned: false
@@ -12,7 +12,6 @@ license: gpl-3.0
 short_description: Turn agentic coding sessions into editable Markdown notes
 ---
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
 # Vibe2Blog
 
 Vibe2Blog is a Gradio app that turns vibe coding session context into editable Markdown blog drafts.
@@ -24,7 +23,7 @@ This project is being prepared as a Build Small Hackathon submission.
 ## Links
 
 - Public GitHub repository: https://github.com/ifirmawan/vibe2blog
-- Hugging Face Space: `<add-huggingface-space-url>`
+- Hugging Face Space: https://huggingface.co/spaces/build-small-hackathon/vibe2blog
 - Social post proof: `<add-social-post-url>`
 
 For the OpenAI Codex Track, the Hugging Face Space README must include the public GitHub repository link.
@@ -228,6 +227,6 @@ When implementing:
 
 ## License
 
-This project is licensed under the GNU Affero General Public License v3.0.
+This project is licensed under the GNU General Public License v3.0.
 
 See [`LICENSE`](LICENSE).

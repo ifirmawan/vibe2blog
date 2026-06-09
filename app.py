@@ -110,7 +110,11 @@ with gr.Blocks(
 
         Turn messy agentic coding context into editable Markdown field notes.
 
-        Built for the Build Small Hackathon with Codex-assisted development. Public GitHub repository: https://github.com/ifirmawan/vibe2blog.
+        Built for the Build Small Hackathon with Codex-assisted development.
+
+        Space: https://huggingface.co/spaces/build-small-hackathon/vibe2blog
+
+        Public GitHub repository: https://github.com/ifirmawan/vibe2blog
         """,
         elem_classes=["vibe2blog-title"],
     )
