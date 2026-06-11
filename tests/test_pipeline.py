@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from vibe2blog.pipeline import generate_article
 
@@ -44,6 +45,37 @@ class ArticlePipelineTest(unittest.TestCase):
         self.assertIn("useSafeAreaInsets", markdown)
         self.assertIn("src/screens/HomeScreen.tsx", markdown)
         self.assertNotIn("⏺", markdown)
+        self.assertTrue(result.validation.valid)
+
+    def test_pipeline_applies_modal_polish_when_configured(self) -> None:
+        polished = """---
+title: "Vibe2Blog"
+---
+
+## Problem
+Polished draft.
+
+## Context
+Specific context.
+
+## Change
+Specific change.
+
+## Verification
+Specific verification.
+"""
+
+        with patch("vibe2blog.pipeline.should_polish_with_modal", return_value=True):
+            with patch("vibe2blog.pipeline.maybe_polish_markdown", return_value=polished):
+                result = generate_article(
+                    topic="Vibe2Blog",
+                    session_summary="We built a Gradio app for turning coding sessions into Markdown.",
+                    language="en",
+                )
+
+        self.assertIn("Polished draft", result.generation.markdown)
+        self.assertIn("+modal-polish", result.generation.provider)
+        self.assertIn("Modal polish applied.", result.generation.quality_notes)
         self.assertTrue(result.validation.valid)
 
 

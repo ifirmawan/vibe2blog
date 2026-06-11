@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import ssl
 import urllib.error
+import urllib.parse
 import urllib.request
 
 
@@ -48,19 +50,59 @@ def summarize_with_modal_vllm(raw_text: str, *, language: str) -> str:
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
 
-    request = urllib.request.Request(
-        endpoint,
-        data=json.dumps(payload).encode("utf-8"),
-        headers=headers,
-        method="POST",
-    )
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            body = response.read().decode("utf-8")
+        body = post_json_with_modal_redirect(endpoint, payload, headers, timeout=timeout)
     except (OSError, urllib.error.HTTPError, urllib.error.URLError):
         return ""
 
     return parse_chat_completion_content(body)
+
+
+class NoPostRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Expose Modal redirects so callers can repeat POST with the same body."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
+        return None
+
+
+def post_json_with_modal_redirect(
+    endpoint: str,
+    payload: dict,
+    headers: dict[str, str],
+    *,
+    timeout: float,
+    max_redirects: int = 3,
+) -> str:
+    """POST JSON and manually follow Modal 303 redirects without changing to GET."""
+    data = json.dumps(payload).encode("utf-8")
+    opener = build_modal_opener()
+    url = endpoint
+    for _ in range(max_redirects + 1):
+        request = urllib.request.Request(url, data=data, headers=headers, method="POST")
+        try:
+            with opener.open(request, timeout=timeout) as response:
+                return response.read().decode("utf-8")
+        except urllib.error.HTTPError as exc:
+            if exc.code not in {301, 302, 303, 307, 308}:
+                raise
+            location = exc.headers.get("Location")
+            if not location:
+                raise
+            url = urllib.parse.urljoin(url, location)
+    return ""
+
+
+def build_modal_opener() -> urllib.request.OpenerDirector:
+    """Build an opener that understands Modal redirects and local CA bundles."""
+    handlers: list[object] = [NoPostRedirectHandler]
+    try:
+        import certifi
+    except ImportError:
+        pass
+    else:
+        context = ssl.create_default_context(cafile=certifi.where())
+        handlers.append(urllib.request.HTTPSHandler(context=context))
+    return urllib.request.build_opener(*handlers)
 
 
 def build_chat_completions_url(base_url: str) -> str:

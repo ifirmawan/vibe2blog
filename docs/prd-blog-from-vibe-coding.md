@@ -93,6 +93,9 @@ Produk utama untuk hackathon adalah Gradio app yang di-host sebagai Hugging Face
 - An `EditorialQualityPass` module will evaluate and optionally rewrite the draft for specificity, narrative flow, concrete technical detail, natural transitions, and reduced generic AI phrasing.
 - A `MarkdownExporter` module will produce downloadable Markdown bytes and a deterministic filename.
 - The MVP will use prompting, few-shot examples, style guidance, and rewrite passes for humanized writing quality.
+- The editorial rewrite pass may use a Modal-hosted OpenAI-compatible vLLM endpoint when `MODAL_POLISH_ENABLED=true` and `MODAL_VLLM_BASE_URL` is configured.
+- Modal polishing must preserve factual claims, Markdown structure, YAML frontmatter, code blocks, file names, commands, and verification results.
+- If Modal polishing fails, the app must keep the original generated draft rather than failing the user flow.
 - Fine-tuning is not required for the hackathon MVP.
 - Fine-tuning may be considered later if the project accumulates enough high-quality example articles and needs a consistent personal/editorial voice.
 - CLI and slash-command support are future extensions. They should reuse the same core modules after the Gradio MVP works.

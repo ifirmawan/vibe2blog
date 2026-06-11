@@ -79,6 +79,11 @@ Transcript extraction has two paths:
 - Deterministic local extraction for Claude Code/Codex-style tool logs.
 - Optional Modal vLLM extraction when `MODAL_VLLM_BASE_URL` is configured.
 
+Editorial polishing also has two paths:
+
+- Lightweight local quality scoring and deterministic cleanup.
+- Optional Modal vLLM rewrite when `MODAL_POLISH_ENABLED=true` and `MODAL_VLLM_BASE_URL` is configured.
+
 ## Hackathon Fit
 
 Vibe2Blog is planned as a Gradio app hosted on Hugging Face Spaces.
@@ -226,12 +231,27 @@ Without `HF_TOKEN` and `VIBE2BLOG_MODEL`, the app uses a deterministic template 
 Optional Modal transcript extraction:
 
 ```bash
-export MODAL_VLLM_BASE_URL="https://your-workspace--your-app-serve.modal.run"
+export MODAL_VLLM_BASE_URL="https://<workspace>--vibe2blog-backend-serve.modal.run/v1"
 export MODAL_VLLM_MODEL="llm"
+export MODAL_VLLM_TIMEOUT="45"
 .venv/bin/python app.py
 ```
 
 The Modal endpoint should expose an OpenAI-compatible `/v1/chat/completions` route, such as the vLLM server pattern from Modal's official example.
+
+Optional Modal editorial polishing:
+
+```bash
+export MODAL_VLLM_BASE_URL="https://<workspace>--vibe2blog-backend-serve.modal.run/v1"
+export MODAL_VLLM_MODEL="llm"
+export MODAL_POLISH_ENABLED="true"
+export MODAL_POLISH_TIMEOUT="60"
+.venv/bin/python app.py
+```
+
+When enabled, Vibe2Blog sends the generated Markdown draft to the Modal vLLM endpoint for a final editorial pass. The prompt instructs the model to preserve factual claims, YAML frontmatter, Markdown headings, file names, commands, verification results, and code blocks while improving flow, specificity, and readability. If Modal fails, the original draft is kept.
+
+Modal may return an initial `303` redirect for web server calls. Vibe2Blog follows that redirect while preserving the original POST body.
 
 When implementing:
 

@@ -70,6 +70,7 @@ Build a Hugging Face Space with a Gradio app that supports:
 - Secret redaction before prompt construction.
 - Markdown generation with YAML frontmatter.
 - Editorial quality pass to reduce generic AI prose and improve specificity.
+- Optional Modal-backed editorial polishing for more natural Markdown drafts.
 - Markdown preview/editor.
 - Copy or download `.md`.
 - Built-in sample data for judges.
@@ -120,6 +121,8 @@ Selection criteria:
 The implementation should keep the model behind an `ArticleGenerator` boundary so the model can be swapped if runtime constraints require it.
 
 Transcript extraction can optionally use Modal credits through an OpenAI-compatible vLLM service. The Space should read `MODAL_VLLM_BASE_URL` and `MODAL_VLLM_MODEL`; if unavailable or failing, it must fall back to deterministic local extraction so the demo remains usable.
+
+Editorial polishing can use the same Modal endpoint when `MODAL_POLISH_ENABLED=true`. This should run after article generation and before validation/export. If Modal fails, the original draft should remain valid and downloadable.
 
 Candidate model families to evaluate:
 

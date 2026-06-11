@@ -6,6 +6,7 @@ from .context import SessionContext, normalize_context
 from .exporter import write_markdown
 from .extractor import maybe_extract_session_summary
 from .generator import ArticleGenerator, GenerationResult, get_default_generator
+from .modal_polisher import should_polish_with_modal, maybe_polish_markdown
 from .redactor import redact_secrets
 from .validator import ValidationResult, validate_markdown
 
@@ -50,6 +51,16 @@ def generate_article(
     context = build_context_with_redaction(**kwargs)
     active_generator = generator or get_default_generator()
     generation = active_generator.generate(context)
+    if should_polish_with_modal():
+        polished_markdown = maybe_polish_markdown(generation.markdown, context)
+        if polished_markdown != generation.markdown:
+            generation = GenerationResult(
+                markdown=polished_markdown,
+                title=generation.title,
+                quality_notes=f"{generation.quality_notes} Modal polish applied.",
+                prompt=generation.prompt,
+                provider=f"{generation.provider}+modal-polish",
+            )
     validation = validate_markdown(
         generation.markdown,
         require_frontmatter=context.include_frontmatter,
