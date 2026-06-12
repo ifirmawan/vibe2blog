@@ -75,6 +75,7 @@ Produk utama untuk hackathon adalah Gradio app yang di-host sebagai Hugging Face
 - The app will support `id` and `en` as first-class initial output languages.
 - The language option will control article prose, section headings, generated title, generated description, and language-related frontmatter.
 - The app will expose tone and audience controls as simple dropdowns.
+- Tone presets apply to deterministic fallback generation. When Modal-backed storytelling polish is enabled, tone presets are ignored so the model can shape a more natural technical story.
 - The app will produce Markdown with YAML frontmatter by default.
 - The default generated structure will include title, date, tags, introduction, problem context, implementation story, key technical decisions, verification, lessons learned, and conclusion.
 - The model used for the hackathon must fit the Build Small constraint of less than or equal to 32B parameters.
@@ -95,6 +96,7 @@ Produk utama untuk hackathon adalah Gradio app yang di-host sebagai Hugging Face
 - The MVP will use prompting, few-shot examples, style guidance, and rewrite passes for humanized writing quality.
 - The editorial rewrite pass may use a Modal-hosted OpenAI-compatible vLLM endpoint when `MODAL_POLISH_ENABLED=true` and `MODAL_VLLM_BASE_URL` is configured.
 - Modal polishing must preserve factual claims, Markdown structure, YAML frontmatter, code blocks, file names, commands, and verification results.
+- Modal polishing may add light transitions and connective sentences as long as they stay within the supplied context.
 - If Modal polishing fails, the app must keep the original generated draft rather than failing the user flow.
 - Fine-tuning is not required for the hackathon MVP.
 - Fine-tuning may be considered later if the project accumulates enough high-quality example articles and needs a consistent personal/editorial voice.

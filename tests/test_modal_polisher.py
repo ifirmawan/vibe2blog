@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from vibe2blog.context import normalize_context
 from vibe2blog.modal_polisher import (
+    STORYTELLING_TONE,
     build_polish_system_prompt,
     build_polish_user_prompt,
     maybe_polish_markdown,
@@ -39,21 +40,24 @@ class ModalPolisherTest(unittest.TestCase):
         self.assertIn("Pertahankan semua klaim faktual", prompt)
         self.assertIn("YAML frontmatter", prompt)
         self.assertIn("code block", prompt)
+        self.assertIn("Jangan membuat YAML frontmatter", prompt)
         self.assertIn("Jangan mengarang", prompt)
         self.assertIn("Jangan memberi contoh", prompt)
+        self.assertIn("cerita teknis", prompt)
+        self.assertIn("kalimat penghubung ringan", prompt)
 
     def test_user_prompt_includes_style_context(self) -> None:
         context = normalize_context(
             session_summary="We fixed a bug.",
             language="en",
-            tone="tutorial",
+            tone=STORYTELLING_TONE,
             audience="maintainers",
         )
 
         prompt = build_polish_user_prompt("## Draft", context)
 
         self.assertIn("Language: en", prompt)
-        self.assertIn("Tone: tutorial", prompt)
+        self.assertIn(f"Editorial mode: {STORYTELLING_TONE}", prompt)
         self.assertIn("Audience: maintainers", prompt)
         self.assertIn("Return the edited version of this exact draft only.", prompt)
         self.assertIn("## Draft", prompt)

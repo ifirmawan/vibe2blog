@@ -6,7 +6,7 @@ from .context import SessionContext, normalize_context
 from .exporter import write_markdown
 from .extractor import maybe_extract_session_summary
 from .generator import ArticleGenerator, GenerationResult, get_default_generator
-from .modal_polisher import should_polish_with_modal, maybe_polish_markdown
+from .modal_polisher import STORYTELLING_TONE, should_polish_with_modal, maybe_polish_markdown
 from .redactor import redact_secrets
 from .validator import ValidationResult, validate_markdown
 
@@ -41,6 +41,23 @@ def build_context_with_redaction(**kwargs: object) -> SessionContext:
     )
 
 
+def build_storytelling_context(context: SessionContext) -> SessionContext:
+    """Use one editorial mode for Modal-backed human storytelling output."""
+    return SessionContext(
+        topic=context.topic,
+        session_summary=context.session_summary,
+        transcript_excerpt=context.transcript_excerpt,
+        git_diff=context.git_diff,
+        verification_notes=context.verification_notes,
+        language=context.language,
+        tone=STORYTELLING_TONE,
+        audience=context.audience,
+        include_code_snippets=context.include_code_snippets,
+        include_frontmatter=context.include_frontmatter,
+        editorial_quality_pass=context.editorial_quality_pass,
+    )
+
+
 def generate_article(
     *,
     generator: ArticleGenerator | None = None,
@@ -49,10 +66,12 @@ def generate_article(
 ) -> PipelineResult:
     """Run the full article flow: context prep, generation, validation, and export."""
     context = build_context_with_redaction(**kwargs)
+    modal_storytelling = should_polish_with_modal()
+    generation_context = build_storytelling_context(context) if modal_storytelling else context
     active_generator = generator or get_default_generator()
-    generation = active_generator.generate(context)
-    if should_polish_with_modal():
-        polished_markdown = maybe_polish_markdown(generation.markdown, context)
+    generation = active_generator.generate(generation_context)
+    if modal_storytelling:
+        polished_markdown = maybe_polish_markdown(generation.markdown, generation_context)
         if polished_markdown != generation.markdown:
             generation = GenerationResult(
                 markdown=polished_markdown,

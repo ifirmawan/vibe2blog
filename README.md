@@ -56,7 +56,7 @@ The app lets a user paste:
 Then the user can choose:
 
 - Output language: Indonesian (`id`) or English (`en`)
-- Tone
+- Tone, when Modal storytelling mode is not enabled
 - Target audience
 - Whether to include frontmatter
 - Whether to include code snippets
@@ -83,6 +83,8 @@ Editorial polishing also has two paths:
 
 - Lightweight local quality scoring and deterministic cleanup.
 - Optional Modal vLLM rewrite when `MODAL_POLISH_ENABLED=true` and `MODAL_VLLM_BASE_URL` is configured.
+
+When Modal polishing is enabled, Vibe2Blog automatically uses a human storytelling editorial mode and ignores tone presets. Tone presets remain available only for deterministic fallback mode.
 
 ## Hackathon Fit
 
@@ -252,6 +254,8 @@ export MODAL_POLISH_TIMEOUT="60"
 When enabled, Vibe2Blog sends the generated Markdown draft to the Modal vLLM endpoint for a final editorial pass. The prompt instructs the model to preserve factual claims, YAML frontmatter, Markdown headings, file names, commands, verification results, and code blocks while improving flow, specificity, and readability. If Modal fails, the original draft is kept.
 
 Modal may return an initial `303` redirect for web server calls. Vibe2Blog follows that redirect while preserving the original POST body.
+
+In Modal storytelling mode, the UI hides tone presets and the model receives one editorial direction: write a natural technical story from the supplied context. Light transitions and connective sentences are allowed, but the model is instructed not to invent facts, files, tests, APIs, decisions, or outcomes.
 
 When implementing:
 

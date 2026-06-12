@@ -78,6 +78,20 @@ class ToneTemplateTest(unittest.TestCase):
         self.assertNotIn("token", markdown)
         self.assertNotIn("role", markdown)
 
+    def test_storytelling_internal_tone_uses_narrative_seed_structure(self) -> None:
+        result = generate_article(
+            topic="Fixing a Login Button That Stayed Disabled",
+            session_summary="The login button used stale validity state and stayed disabled after valid input.",
+            language="en",
+            tone="human storytelling technical blog",
+            include_frontmatter=False,
+        )
+        markdown = result.generation.markdown
+
+        self.assertIn("## Opening", markdown)
+        self.assertIn("## Finding the Root Cause", markdown)
+        self.assertNotIn("## Goal", markdown)
+
 
 if __name__ == "__main__":
     unittest.main()

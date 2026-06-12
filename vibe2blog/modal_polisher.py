@@ -12,6 +12,9 @@ from .modal_extractor import (
 )
 
 
+STORYTELLING_TONE = "human storytelling technical blog"
+
+
 def modal_polish_enabled() -> bool:
     """Enable the polish pass only when the user explicitly opts in."""
     enabled = os.getenv("MODAL_POLISH_ENABLED", "false").strip().lower()
@@ -66,8 +69,11 @@ def build_polish_system_prompt(language: str) -> str:
             "Poles draft Markdown agar terasa lebih natural, spesifik, dan manusiawi. "
             "Pertahankan semua klaim faktual, struktur Markdown, YAML frontmatter, heading, "
             "nama file, command, hasil verifikasi, dan code block. "
+            "Jangan membuat YAML frontmatter, tanggal, author, tag, atau metadata baru jika tidak ada di draft. "
             "Jangan mengarang test, file, API, keputusan, hasil, atau detail baru. "
             "Hilangkan frasa AI generik dan perbaiki alur transisi. "
+            "Susun ulang draft sebagai cerita teknis yang enak diikuti: masalah, penelusuran, momen temuan, perubahan, verifikasi, dan pelajaran. "
+            "Boleh menambahkan transisi atau kalimat penghubung ringan selama tetap berada dalam konteks yang diberikan. "
             "Jika draft pendek, tetap poles draft yang ada tanpa meminta konteks tambahan. "
             "Jangan memberi contoh, template, penjelasan, atau catatan editor. "
             "Kembalikan hanya Markdown final."
@@ -77,8 +83,11 @@ def build_polish_system_prompt(language: str) -> str:
         "Polish the Markdown draft so it reads more natural, specific, and human. "
         "Preserve all factual claims, Markdown structure, YAML frontmatter, headings, "
         "file names, commands, verification results, and code blocks. "
+        "Do not create YAML frontmatter, dates, authors, tags, or metadata when the draft does not already include them. "
         "Do not invent tests, files, APIs, decisions, outcomes, or new details. "
         "Remove generic AI phrasing and improve narrative flow. "
+        "Shape the draft as a technical story: problem, investigation, discovery moment, change, verification, and lesson. "
+        "You may add light transitions or connective sentences as long as they stay inside the supplied context. "
         "If the draft is short, polish only the draft provided without asking for more context. "
         "Do not provide examples, templates, explanations, or editor notes. "
         "Return only the final Markdown."
@@ -88,7 +97,7 @@ def build_polish_system_prompt(language: str) -> str:
 def build_polish_user_prompt(markdown: str, context: SessionContext) -> str:
     """Provide style context and the bounded draft to rewrite."""
     return f"""Language: {context.language}
-Tone: {context.tone}
+Editorial mode: {context.tone}
 Audience: {context.audience}
 
 Rewrite this Markdown draft according to the system instructions.

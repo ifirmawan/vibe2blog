@@ -65,7 +65,7 @@ Build a Hugging Face Space with a Gradio app that supports:
 - Optional git diff input.
 - Optional verification notes input.
 - Language selection: Indonesian (`id`) and English (`en`).
-- Tone selection.
+- Tone selection for fallback mode; Modal-backed storytelling mode should hide or ignore tone presets.
 - Audience selection.
 - Secret redaction before prompt construction.
 - Markdown generation with YAML frontmatter.
@@ -123,6 +123,8 @@ The implementation should keep the model behind an `ArticleGenerator` boundary s
 Transcript extraction can optionally use Modal credits through an OpenAI-compatible vLLM service. The Space should read `MODAL_VLLM_BASE_URL` and `MODAL_VLLM_MODEL`; if unavailable or failing, it must fall back to deterministic local extraction so the demo remains usable.
 
 Editorial polishing can use the same Modal endpoint when `MODAL_POLISH_ENABLED=true`. This should run after article generation and before validation/export. If Modal fails, the original draft should remain valid and downloadable.
+
+When Modal-backed polishing is enabled, the demo should emphasize natural storytelling over visible tone presets. The model may add light connective prose, but it must stay inside the provided coding-session context.
 
 Candidate model families to evaluate:
 

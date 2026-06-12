@@ -4,7 +4,42 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from vibe2blog.context import SessionContext
+from vibe2blog.generator import ArticleGenerator, GenerationResult
+from vibe2blog.modal_polisher import STORYTELLING_TONE
 from vibe2blog.pipeline import generate_article
+
+
+class CapturingGenerator(ArticleGenerator):
+    markdown = """---
+title: "Captured"
+---
+
+## Problem
+Draft.
+
+## Context
+Context.
+
+## Change
+Change.
+
+## Verification
+Verification.
+"""
+
+    def __init__(self) -> None:
+        self.context: SessionContext | None = None
+
+    def generate(self, context: SessionContext) -> GenerationResult:
+        self.context = context
+        return GenerationResult(
+            markdown=self.markdown,
+            title="Captured",
+            quality_notes="Captured.",
+            prompt="",
+            provider="capturing",
+        )
 
 
 class ArticlePipelineTest(unittest.TestCase):
@@ -76,6 +111,24 @@ Specific verification.
         self.assertIn("Polished draft", result.generation.markdown)
         self.assertIn("+modal-polish", result.generation.provider)
         self.assertIn("Modal polish applied.", result.generation.quality_notes)
+        self.assertTrue(result.validation.valid)
+
+    def test_modal_storytelling_ignores_user_tone_before_generation(self) -> None:
+        generator = CapturingGenerator()
+
+        with patch("vibe2blog.pipeline.should_polish_with_modal", return_value=True):
+            with patch("vibe2blog.pipeline.maybe_polish_markdown", return_value=CapturingGenerator.markdown):
+                result = generate_article(
+                    generator=generator,
+                    topic="Fix login button",
+                    session_summary="The user selected tutorial, but Modal should own the editorial style.",
+                    language="en",
+                    tone="tutorial",
+                )
+
+        self.assertIsNotNone(generator.context)
+        self.assertEqual(generator.context.tone, STORYTELLING_TONE)
+        self.assertNotIn("+modal-polish", result.generation.provider)
         self.assertTrue(result.validation.valid)
 
 

@@ -117,14 +117,14 @@ def build_template_article(context: SessionContext) -> str:
             return build_indonesian_tutorial_template(context, title)
         if tone == "concise":
             return build_indonesian_concise_template(context, title)
-        if tone == "narrative":
+        if tone == "narrative" or "storytelling" in tone:
             return build_indonesian_narrative_template(context, title)
         return build_indonesian_reflective_template(context, title)
     if tone == "tutorial":
         return build_english_tutorial_template(context, title)
     if tone == "concise":
         return build_english_concise_template(context, title)
-    if tone == "narrative":
+    if tone == "narrative" or "storytelling" in tone:
         return build_english_narrative_template(context, title)
     return build_english_reflective_template(context, title)
 

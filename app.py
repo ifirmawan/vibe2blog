@@ -2,31 +2,46 @@ from __future__ import annotations
 
 import gradio as gr
 
+from vibe2blog.modal_polisher import should_polish_with_modal
 from vibe2blog.pipeline import generate_article
 
 
-SAMPLE_SUMMARY = """We planned Vibe2Blog, a Gradio app for the Build Small Hackathon.
-The product changed from CLI-first to Gradio-first so judges can try it directly in a Hugging Face Space.
-Important decisions:
-- Gradio is the hackathon MVP.
-- CLI and slash commands are future extensions.
-- Output supports Indonesian and English.
-- Likely secrets are redacted before generation.
-- The generated result is Markdown with frontmatter.
+MODAL_STORYTELLING_ENABLED = should_polish_with_modal()
+
+SAMPLE_TITLE = "Fixing a Login Button That Stayed Disabled"
+
+SAMPLE_SUMMARY = """> The login button stays disabled even after users enter a valid email and password.
+
+⏺ I'll inspect the login form state and validation logic.
+⏺ Read(src/screens/LoginScreen.tsx)
+⎿ Read 120 lines
+⏺ I found the issue. The form validates email and password correctly, but the disabled state reads from an old `isValid` flag that is never updated after typing.
+⏺ Search(pattern: "isValid", path: "src/screens")
+⎿ Found 3 matches
+⏺ Update(src/screens/LoginScreen.tsx)
+⎿ Updated src/screens/LoginScreen.tsx with 4 additions and 2 removals
+
+The fix removes the stale `isValid` state and derives `canSubmit` directly from the current email, password, loading state, and validation errors.
+
+> It works now. The button enables after valid input and disables while the login request is running.
 """
 
-SAMPLE_TRANSCRIPT = """The key product decision was to keep the core generator reusable while making the hackathon demo Gradio-first.
-We also added a Codex Track plan, GitHub-to-Hugging Face sync plan, and post-MVP extension PRDs for WordPress and Modal featured images.
+SAMPLE_TRANSCRIPT = """The session focused on a common UI bug: the visual form looked valid, but the submit button stayed disabled.
+The useful debugging step was comparing what the UI displayed with which state variable actually controlled the button.
 """
 
-SAMPLE_DIFF = """diff --git a/README.md b/README.md
-+ Added OpenAI Codex Track requirements.
-+ Added Hugging Face Space deployment plan.
-+ Added editorial quality pass to the roadmap.
+SAMPLE_DIFF = """diff --git a/src/screens/LoginScreen.tsx b/src/screens/LoginScreen.tsx
+- const [isValid, setIsValid] = useState(false)
+- const disabled = !isValid || isLoading
++ const canSubmit = emailError === "" && passwordError === "" && email !== "" && password !== ""
++ const disabled = !canSubmit || isLoading
 """
 
-SAMPLE_VERIFICATION = """Documentation baseline was committed with a Codex co-author trailer.
-The repo now includes PRDs, AGENTS.md, and Space deployment planning.
+SAMPLE_VERIFICATION = """Manual test:
+- Empty form keeps the login button disabled.
+- Invalid email keeps the button disabled and shows an error.
+- Valid email and password enable the button.
+- Clicking login disables the button while the request is pending.
 """
 
 
@@ -81,13 +96,13 @@ def generate(
 
 def load_sample() -> tuple[str, str, str, str, str, str, str, str, bool, bool, bool]:
     return (
-        "Mengubah Sesi Vibe Coding Menjadi Catatan Lapangan",
+        SAMPLE_TITLE,
         SAMPLE_SUMMARY,
         SAMPLE_TRANSCRIPT,
         SAMPLE_DIFF,
         SAMPLE_VERIFICATION,
-        "id",
-        "reflective",
+        "en",
+        "narrative",
         "developers",
         True,
         True,
@@ -121,11 +136,17 @@ with gr.Blocks(
 
     with gr.Row():
         with gr.Column(scale=5):
-            topic = gr.Textbox(label="Topic or working title", placeholder="Building Vibe2Blog for the Build Small Hackathon")
+            topic = gr.Textbox(
+                label="Topic or working title",
+                placeholder="Example: Fixing a Login Button That Stayed Disabled",
+            )
             session_summary = gr.Textbox(
                 label="Session summary or raw agent transcript",
                 lines=8,
-                placeholder="Paste a short summary or raw Claude Code/Codex-style session transcript...",
+                placeholder=(
+                    "Paste a summary or raw agent transcript. Example: the problem, what the agent inspected, "
+                    "what changed, how it was verified, and the final outcome."
+                ),
             )
             with gr.Accordion("Optional context", open=False):
                 transcript_excerpt = gr.Textbox(label="Transcript excerpt", lines=5)
@@ -136,7 +157,16 @@ with gr.Blocks(
             tone = gr.Dropdown(
                 ["reflective", "tutorial", "concise", "narrative"],
                 value="reflective",
-                label="Tone",
+                label="Tone (fallback mode only)",
+                visible=not MODAL_STORYTELLING_ENABLED,
+            )
+            gr.Markdown(
+                (
+                    "Modal storytelling mode is active. Tone presets are disabled so the model can shape a more natural engineering story from the supplied context."
+                    if MODAL_STORYTELLING_ENABLED
+                    else "Tone presets are used by the deterministic fallback when Modal storytelling mode is not enabled."
+                ),
+                elem_classes=["vibe2blog-note"],
             )
             audience = gr.Dropdown(
                 ["developers", "beginners", "maintainers", "product stakeholders"],
@@ -146,7 +176,7 @@ with gr.Blocks(
             include_code_snippets = gr.Checkbox(value=True, label="Include selected code snippets")
             include_frontmatter = gr.Checkbox(value=True, label="Include YAML frontmatter")
             editorial_quality_pass = gr.Checkbox(value=True, label="Editorial quality pass")
-            sample_button = gr.Button("Load sample data", variant="secondary")
+            sample_button = gr.Button("Load demo template", variant="secondary")
             generate_button = gr.Button("Generate Markdown", variant="primary")
             gr.Markdown(
                 "Do not paste secrets. Vibe2Blog redacts common token patterns and can summarize raw agent transcripts before building the prompt.",
