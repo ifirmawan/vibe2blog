@@ -48,7 +48,7 @@ def summarize_with_modal_vllm(raw_text: str, *, language: str) -> str:
     }
     api_key = os.getenv("MODAL_VLLM_API_KEY", "").strip()
     if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
+        headers["X-API-Key"] = api_key
 
     try:
         body = post_json_with_modal_redirect(endpoint, payload, headers, timeout=timeout)

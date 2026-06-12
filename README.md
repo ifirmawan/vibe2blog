@@ -235,6 +235,7 @@ Optional Modal transcript extraction:
 ```bash
 export MODAL_VLLM_BASE_URL="https://<workspace>--vibe2blog-backend-serve.modal.run/v1"
 export MODAL_VLLM_MODEL="llm"
+export MODAL_VLLM_API_KEY="<x-api-key-from-vllm-registry>"
 export MODAL_VLLM_TIMEOUT="45"
 .venv/bin/python app.py
 ```
@@ -246,6 +247,7 @@ Optional Modal editorial polishing:
 ```bash
 export MODAL_VLLM_BASE_URL="https://<workspace>--vibe2blog-backend-serve.modal.run/v1"
 export MODAL_VLLM_MODEL="llm"
+export MODAL_VLLM_API_KEY="<x-api-key-from-vllm-registry>"
 export MODAL_POLISH_ENABLED="true"
 export MODAL_POLISH_TIMEOUT="60"
 .venv/bin/python app.py
@@ -256,6 +258,8 @@ When enabled, Vibe2Blog sends the generated Markdown draft to the Modal vLLM end
 Modal may return an initial `303` redirect for web server calls. Vibe2Blog follows that redirect while preserving the original POST body.
 
 In Modal storytelling mode, the UI hides tone presets and the model receives one editorial direction: write a natural technical story from the supplied context. Light transitions and connective sentences are allowed, but the model is instructed not to invent facts, files, tests, APIs, decisions, or outcomes.
+
+When the Modal backend is protected, `MODAL_VLLM_API_KEY` is sent as an `X-API-Key` header. Do not commit real keys.
 
 When implementing:
 

@@ -51,7 +51,7 @@ def polish_markdown_with_modal(markdown: str, context: SessionContext) -> str:
     }
     api_key = os.getenv("MODAL_VLLM_API_KEY", "").strip()
     if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
+        headers["X-API-Key"] = api_key
 
     try:
         body = post_json_with_modal_redirect(endpoint, payload, headers, timeout=timeout)

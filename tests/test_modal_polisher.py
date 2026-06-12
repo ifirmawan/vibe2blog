@@ -74,6 +74,7 @@ class ModalPolisherTest(unittest.TestCase):
             {
                 "MODAL_VLLM_BASE_URL": "https://example.modal.run",
                 "MODAL_VLLM_MODEL": "llm",
+                "MODAL_VLLM_API_KEY": "test-key",
                 "MODAL_POLISH_TIMEOUT": "12",
             },
             clear=True,
@@ -87,6 +88,7 @@ class ModalPolisherTest(unittest.TestCase):
         self.assertEqual(payload["model"], "llm")
         self.assertEqual(payload["temperature"], 0.35)
         self.assertEqual(headers["Content-Type"], "application/json")
+        self.assertEqual(headers["X-API-Key"], "test-key")
 
     def test_maybe_polish_falls_back_to_original_when_modal_fails(self) -> None:
         context = normalize_context(session_summary="We fixed a bug.", language="en")
